@@ -2,12 +2,25 @@ service: next-lambda-container
  
 provider:
   name: aws
+  region: eu-north-1
   ecr:
     images:
       appimage:
         path: ./
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - GET
+        - OPTIONS
+      maxAge: 6000
  
 functions:
   nextapp:
     image:
       name: appimage
+    events:
+      - httpApi: '*'
