@@ -18,7 +18,7 @@ jobs:
         run: sls config credentials --provider aws --key ${{ secrets.AWS_ID }} --secret ${{ secrets.AWS_SECRET }}
 
       - name: Build Docker Image
-        run: docker build -t appimage
+        run: docker build . -t appimage
 
       - name: Deploy
         run: sls deploy -s prod
