@@ -23,4 +23,4 @@ EXPOSE 80
 
 ENV PORT 80
 
-ENTRYPOINT ["node", "server.js"]
+ENTRYPOINT ["node", "handler.js"]
