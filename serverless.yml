@@ -1,0 +1,13 @@
+service: next-lambda-container
+ 
+provider:
+  name: aws
+  ecr:
+    images:
+      appimage:
+        path: ./
+ 
+functions:
+  nextapp:
+    image:
+      name: appimage
