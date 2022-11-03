@@ -1,12 +1,39 @@
-const path = require('path');
-const NextServer = require('next/dist/server/next-server').default;
+const { createServer } = require('http');
+const { parse } = require('url');
+const { httpCompat } = require('./compat');
+const next = require('next');
 
-const nextServer = new NextServer({
-    dir: path.join(__dirname),
-    dev: false,
-    customServer: false,
-    conf: { "env": {}, "webpack": null, "webpackDevMiddleware": null, "eslint": { "ignoreDuringBuilds": false }, "typescript": { "ignoreBuildErrors": false, "tsconfigPath": "tsconfig.json" }, "distDir": "./.next", "cleanDistDir": true, "assetPrefix": "", "configOrigin": "next.config.js", "useFileSystemPublicRoutes": true, "generateEtags": true, "pageExtensions": ["tsx", "ts", "jsx", "js"], "target": "server", "poweredByHeader": true, "compress": true, "analyticsId": "", "images": { "deviceSizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840], "imageSizes": [16, 32, 48, 64, 96, 128, 256, 384], "path": "/_next/image", "loader": "default", "loaderFile": "", "domains": [], "disableStaticImages": false, "minimumCacheTTL": 60, "formats": ["image/webp"], "dangerouslyAllowSVG": false, "contentSecurityPolicy": "script-src 'none'; frame-src 'none'; sandbox;", "remotePatterns": [], "unoptimized": false }, "devIndicators": { "buildActivity": true, "buildActivityPosition": "bottom-right" }, "onDemandEntries": { "maxInactiveAge": 15000, "pagesBufferLength": 2 }, "amp": { "canonicalBase": "" }, "basePath": "", "sassOptions": {}, "trailingSlash": false, "i18n": null, "productionBrowserSourceMaps": false, "optimizeFonts": true, "excludeDefaultMomentLocales": true, "serverRuntimeConfig": {}, "publicRuntimeConfig": {}, "reactStrictMode": true, "httpAgentOptions": { "keepAlive": true }, "outputFileTracing": true, "staticPageGenerationTimeout": 60, "swcMinify": true, "output": "standalone", "experimental": { "optimisticClientCache": true, "manualClientBasePath": false, "legacyBrowsers": false, "newNextLinkBehavior": true, "cpus": 9, "sharedPool": true, "profiling": false, "isrFlushToDisk": true, "workerThreads": false, "pageEnv": false, "optimizeCss": false, "nextScriptWorkers": false, "scrollRestoration": false, "externalDir": false, "disableOptimizedLoading": false, "gzipSize": true, "swcFileReading": true, "craCompat": false, "esmExternals": true, "appDir": false, "isrMemoryCacheSize": 52428800, "fullySpecified": false, "outputFileTracingRoot": "", "swcTraceProfiling": false, "forceSwcTransforms": false, "largePageDataBytes": 128000, "enableUndici": false, "adjustFontFallbacks": false, "adjustFontFallbacksWithSizeAdjust": false, "trustHostHeader": false }, "configFileName": "next.config.js" },
-})
-const handler = nextServer.getRequestHandler();
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const port = 3000;
+const app = next({ dev });
+const handle = app.getRequestHandler();
+
+const initHandler = async () => await app.prepare();
+
+const handleRequest = async (req, res) => {
+    try {
+        const parsedUrl = parse(req.url, true)
+
+        await handle(req, res, parsedUrl)
+    } catch (err) {
+        console.error('Error occurred handling', req.url, err)
+        res.statusCode = 500
+        res.end('internal server error')
+    }
+};
+
+const handler = async (event) => {
+    const { req, res, responsePromise } = httpCompat(event);
+    await handleRequest(req, res);
+    await responsePromise();
+}
 
 exports.handler = handler;
+
+if (dev) {
+    initHandler().then(() => createServer(handleRequest).listen(port, (err) => {
+        if (err) throw err
+        console.log(`> Ready on http://${hostname}:${port}`)
+    }));
+}

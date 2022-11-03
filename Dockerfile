@@ -16,6 +16,7 @@ ENV NODE_ENV production
 COPY --from=build /app/public ./public
 
 COPY ./handler.js ./
+COPY ./compat.js ./
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 
